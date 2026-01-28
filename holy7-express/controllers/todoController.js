@@ -1,4 +1,4 @@
-const db = require('../config/database');
+const Todo = require('../models/Todo');
 const logger = require('../utils/logger');
 
 /**
@@ -6,7 +6,7 @@ const logger = require('../utils/logger');
  */
 const getAllTodos = (req, res, next) => {
   try {
-    const todos = db.findAll('todos');
+    const todos = Todo.findAll();
     logger.info('获取所有待办事项', { count: todos.length });
     res.json({
       success: true,
@@ -25,7 +25,7 @@ const getAllTodos = (req, res, next) => {
 const getTodoById = (req, res, next) => {
   try {
     const id = parseInt(req.params.id);
-    const todo = db.findById('todos', id);
+    const todo = Todo.findById(id);
     
     if (!todo) {
       logger.warn('待办事项不存在', { id });
@@ -61,7 +61,7 @@ const createTodo = (req, res, next) => {
       });
     }
     
-    const newTodo = db.insert('todos', { title, completed: false });
+    const newTodo = Todo.create({ title, completed: 0 });
     logger.info('创建待办事项成功', { id: newTodo.id, title });
     
     res.status(201).json({
@@ -83,7 +83,7 @@ const updateTodo = (req, res, next) => {
     const id = parseInt(req.params.id);
     const { title, completed } = req.body;
     
-    const updatedTodo = db.update('todos', id, { title, completed });
+    const updatedTodo = Todo.update(id, { title, completed });
     
     if (!updatedTodo) {
       logger.warn('更新待办事项失败：不存在', { id });
@@ -111,7 +111,7 @@ const updateTodo = (req, res, next) => {
 const deleteTodo = (req, res, next) => {
   try {
     const id = parseInt(req.params.id);
-    const deletedTodo = db.delete('todos', id);
+    const deletedTodo = Todo.delete(id);
     
     if (!deletedTodo) {
       logger.warn('删除待办事项失败：不存在', { id });
@@ -138,20 +138,11 @@ const deleteTodo = (req, res, next) => {
  */
 const getStats = (req, res, next) => {
   try {
-    const todos = db.findAll('todos');
-    const total = todos.length;
-    const completed = todos.filter(t => t.completed).length;
-    const pending = total - completed;
-    
-    logger.info('获取统计信息', { total, completed, pending });
+    const stats = Todo.getStats();
+    logger.info('获取统计信息', stats);
     res.json({
       success: true,
-      data: {
-        total,
-        completed,
-        pending,
-        completionRate: total > 0 ? ((completed / total) * 100).toFixed(2) : 0
-      }
+      data: stats
     });
   } catch (error) {
     logger.error('获取统计信息失败', { error: error.message });

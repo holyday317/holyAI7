@@ -6,13 +6,21 @@
   "scripts": {
     "start": "node server.js",
     "dev": "dotenv -e .env.dev -- nodemon server.js",
+    "pm2:start": "pm2 start ecosystem.config.js --env production",
+    "pm2:dev": "pm2 start ecosystem.config.js --env dev",
+    "pm2:stop": "pm2 stop holy7-express",
+    "pm2:restart": "pm2 restart holy7-express",
+    "pm2:delete": "pm2 delete holy7-express",
+    "pm2:logs": "pm2 logs holy7-express",
+    "pm2:status": "pm2 status",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "cors": "^2.8.5",
     "express": "^5.2.1",
-    "cors": "^2.8.5"
+    "sql.js": "^1.13.0"
   },
   "devDependencies": {
     "nodemon": "^3.0.0",
