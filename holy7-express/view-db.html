@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>数据库查看器 - Chats 表</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+        .header p {
+            opacity: 0.9;
+            font-size: 14px;
+        }
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            padding: 20px;
+            background: #f8f9fa;
+            border-bottom: 2px solid #e9ecef;
+        }
+        .stat-item {
+            text-align: center;
+        }
+        .stat-item .number {
+            font-size: 32px;
+            font-weight: bold;
+            color: #667eea;
+        }
+        .stat-item .label {
+            font-size: 14px;
+            color: #6c757d;
+            margin-top: 5px;
+        }
+        .table-container {
+            padding: 20px;
+            overflow-x: auto;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        thead {
+            background: #f8f9fa;
+        }
+        th {
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+            color: #495057;
+            border-bottom: 2px solid #dee2e6;
+            font-size: 14px;
+        }
+        td {
+            padding: 15px;
+            border-bottom: 1px solid #dee2e6;
+            vertical-align: top;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        tr:hover {
+            background: #f8f9fa;
+        }
+        .id-cell {
+            font-weight: bold;
+            color: #667eea;
+            font-size: 16px;
+        }
+        .model-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            background: #667eea;
+            color: white;
+        }
+        .score-cell {
+            font-size: 18px;
+            font-weight: bold;
+            color: #764ba2;
+        }
+        .message-cell {
+            max-width: 400px;
+            word-wrap: break-word;
+            white-space: pre-wrap;
+        }
+        .message-cell.user {
+            background: #e7f3ff;
+            padding: 10px;
+            border-radius: 8px;
+            border-left: 3px solid #007bff;
+        }
+        .message-cell.ai {
+            background: #f0f8ff;
+            padding: 10px;
+            border-radius: 8px;
+            border-left: 3px solid #667eea;
+        }
+        .timestamp {
+            font-size: 12px;
+            color: #6c757d;
+            font-family: 'Courier New', monospace;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #6c757d;
+        }
+        .empty-state svg {
+            width: 80px;
+            height: 80px;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🗄️ Chats 表数据查看器</h1>
+            <p>认知行为疗法 (CBT) 心理辅导会话记录</p>
+        </div>
+        <div class="stats">
+            <div class="stat-item">
+                <div class="number" id="totalChats">0</div>
+                <div class="label">总会话数</div>
+            </div>
+            <div class="stat-item">
+                <div class="number" id="avgScore">0</div>
+                <div class="label">平均困扰评分</div>
+            </div>
+            <div class="stat-item">
+                <div class="number" id="uniqueModels">0</div>
+                <div class="label">使用的模型</div>
+            </div>
+        </div>
+        <div class="table-container">
+            <table id="chatsTable">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>模型</th>
+                        <th>困扰评分</th>
+                        <th>用户消息</th>
+                        <th>AI 响应</th>
+                        <th>创建时间</th>
+                    </tr>
+                </thead>
+                <tbody id="chatsBody">
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        // 数据
+        const chatsData = [
+            {
+                id: 4,
+                model_type: 'deepseek',
+                score: 2,
+                user_message: '',
+                ai_response: '**步骤1：情绪检查与议程设定**\n好的，感谢你告诉我现在的困扰程度是2分。这是一个相对平静的状态，很适合我们进行一些技能的学习和练习。\n\n既然这是我们的第一次对话，我建议我们从CBT最基础、最核心的技能开始：**识别我们的想法和情绪**。这能帮助我们未来在情绪波动时，更清晰地理解自己。\n\n所以，我们今天的议程可以设定为：**学习如何区分"情境"、"想法"和"情绪"**。你觉得可以吗？',
+                created_at: '2026-01-28T03:24:34.912Z'
+            },
+            {
+                id: 3,
+                model_type: 'deepseek',
+                score: 10,
+                user_message: '',
+                ai_response: '**步骤1：情绪检查与议程设定**\n感谢你告诉我这个评分。10分意味着你现在正感到极度困扰，这一定非常难受。我在这里，我们会一起面对。\n\n为了能更有效地帮助你，我们首先需要明确今天对话的焦点。你愿意简单地告诉我，是什么样的事情或感受，让你此刻的困扰达到了10分吗？这样我们可以一起针对这个核心问题展开工作。\n\n**（请注意：根据我的核心原则，我必须监控安全风险。如果你的困扰与伤害自己或他人的想法有关，请务必告诉我，我们将立即启动安全协议。你的安全是最重要的。）**',
+                created_at: '2026-01-28T03:23:54.805Z'
+            },
+            {
+                id: 2,
+                model_type: 'deepseek',
+                score: 333,
+                user_message: '',
+                ai_response: '你好，我是holy柒，一个基于认知行为疗法（CBT）原则的辅导助手。我会通过结构化的对话，帮助你学习管理情绪和想法的实用技能。\n\n**步骤1：情绪检查与议程设定**\n让我们先快速评估一下你当前的情绪，从1到10分，1表示非常平静，10表示极度困扰，你现在的整体困扰程度是几分？\n\n根据你的评分，我们今天可以设定一个简单的议程。作为第一次交流，我们可以从了解CBT的基础概念开始，或者你也可以告诉我一个你最近希望探讨的具体情境。你更倾向于哪一种？',
+                created_at: '2026-01-28T03:23:28.018Z'
+            },
+            {
+                id: 1,
+                model_type: 'deepseek',
+                score: 333,
+                user_message: '',
+                ai_response: '你好，我是holy柒，一个基于认知行为疗法（CBT）原则的心理辅导助手。我的角色是作为你的辅导工具，通过提供心理教育和练习来帮助你更好地管理情绪。\n\n---\n\n**步骤1：情绪检查与议程设定**\n\n让我们先快速评估一下你当前的情绪。从1到10分（1表示非常平静，10表示极度困扰），你现在的整体困扰程度是几分？\n\n根据你的评分，我们可以一起设定今天对话的焦点。例如，我们可以探讨如何识别影响你情绪的想法，或者制定一个小的行动计划来提升情绪。你希望我们从哪里开始呢？\n\n---\n\n**步骤2：技能教学或练习**\n\n今天，我想向你介绍一个CBT中的基础工具，它可以帮助我们理清情绪、想法和情境之间的关系。这个工具叫做"三栏表"。\n\n*   **情境**：发生了什么？时间、地点、人物、事件。\n*   **想法**：在那个瞬间，你脑海里自动浮现的想法是什么？（例如："我搞砸了"、"他们不喜欢我"）\n*   **情绪**：这个想法让你产生了什么情绪？（例如：悲伤、焦虑、愤怒），并给情绪的强度打分（1-10分）。\n\n我们是否可以尝试一个简单的例子？你可以回想一个最近让你感到有些困扰的具体小事，然后我们一起试着填写一下吗？\n\n---\n\n**步骤3：总结与作业布置**\n\n我们今天主要了解了"情境-想法-情绪"之间的联系，认识到我们的自动想法会直接影响情绪。\n\n作为家庭作业，在下次我们对话之前，你愿意尝试记录一次这样的"三栏表"吗？不需要很复杂，哪怕只是记录一件小事也可以。这能帮助我们更清晰地看到自己的思维模式。\n\n---\n\n**步骤4：安全确认与结束**\n\n在我们结束前，我想确认一下：我们今天讨论的内容，有让你感到特别不安或难以承受的部分吗？\n\n**请记住，我是一个辅助工具。如果你感到情绪危机，有伤害自己或他人的想法，请务必立即寻求专业帮助：**\n*   **拨打24小时心理援助热线**（例如：北京热线 010-82951332，希望24热线 400-161-9995）。\n*   **联系你信任的亲友，或前往最近医院的急诊科。**\n\n期待下次与你继续合作。照顾好自己。',
+                created_at: '2026-01-28T03:23:04.594Z'
+            }
+        ];
+
+        // 格式化时间
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleString('zh-CN', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            });
+        }
+
+        // 渲染表格
+        function renderTable() {
+            const tbody = document.getElementById('chatsBody');
+            
+            if (chatsData.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="6" class="empty-state">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                            </svg>
+                            <p>暂无会话记录</p>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            tbody.innerHTML = chatsData.map(chat => `
+                <tr>
+                    <td class="id-cell">#${chat.id}</td>
+                    <td><span class="model-badge">${chat.model_type}</span></td>
+                    <td class="score-cell">${chat.score}</td>
+                    <td class="message-cell user">${chat.user_message || '(无用户消息)'}</td>
+                    <td class="message-cell ai">${chat.ai_response}</td>
+                    <td class="timestamp">${formatDate(chat.created_at)}</td>
+                </tr>
+            `).join('');
+        }
+
+        // 更新统计数据
+        function updateStats() {
+            const total = chatsData.length;
+            const uniqueModels = [...new Set(chatsData.map(c => c.model_type))].length;
+            const validScores = chatsData.filter(c => c.score > 0 && c.score <= 10).map(c => c.score);
+            const avgScore = validScores.length > 0 
+                ? (validScores.reduce((a, b) => a + b, 0) / validScores.length).toFixed(1) 
+                : 'N/A';
+
+            document.getElementById('totalChats').textContent = total;
+            document.getElementById('avgScore').textContent = avgScore;
+            document.getElementById('uniqueModels').textContent = uniqueModels;
+        }
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', () => {
+            updateStats();
+            renderTable();
+        });
+    </script>
+</body>
+</html>

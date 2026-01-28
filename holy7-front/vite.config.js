@@ -15,7 +15,7 @@ export default defineConfig({
       '@': fileURLToPath(new URL('./src', import.meta.url))
     },
   },
-  base: '/holy7-front/',
+  base: process.env.NODE_ENV === 'production' ? '/holy7-front/' : '/',
   server: {
     proxy: {
       '/api': {

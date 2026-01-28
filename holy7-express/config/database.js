@@ -73,6 +73,18 @@ class SQLiteDatabase {
       )
     `);
 
+    // 创建用户表
+    this.db.run(`
+      CREATE TABLE IF NOT EXISTS users (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        username TEXT NOT NULL UNIQUE,
+        password TEXT NOT NULL,
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        last_login TEXT
+      )
+    `);
+
     // 创建 ID 计数器表
     this.db.run(`
       CREATE TABLE IF NOT EXISTS id_counters (
@@ -97,6 +109,7 @@ class SQLiteDatabase {
       // 初始化默认计数器
       this.idCounters.set('todos', 1);
       this.idCounters.set('chats', 1);
+      this.idCounters.set('users', 1);
     }
   }
 
@@ -114,6 +127,49 @@ class SQLiteDatabase {
     );
     
     return currentId;
+  }
+
+  /**
+   * 执行原始 SQL 语句
+   */
+  run(sql, params = []) {
+    try {
+      this.db.run(sql, params);
+    } catch (error) {
+      console.error('❌ 执行 SQL 失败:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * 执行查询并返回结果
+   */
+  exec(sql, params = []) {
+    try {
+      if (params && params.length > 0) {
+        // 对于带参数的查询,需要先替换参数
+        let paramIndex = 0;
+        const sqlWithParams = sql.replace(/\?/g, () => {
+          if (paramIndex < params.length) {
+            const param = params[paramIndex++];
+            if (typeof param === 'string') {
+              return `'${param.replace(/'/g, "''")}'`;
+            } else if (param === null) {
+              return 'NULL';
+            } else {
+              return String(param);
+            }
+          }
+          return '?';
+        });
+        return this.db.exec(sqlWithParams);
+      } else {
+        return this.db.exec(sql);
+      }
+    } catch (error) {
+      console.error('❌ 查询 SQL 失败:', error);
+      throw error;
+    }
   }
 
   /**
@@ -292,20 +348,6 @@ class SQLiteDatabase {
     return obj;
   }
 
-  /**
-   * 初始化示例数据
-   */
-  initSampleData() {
-    // 检查是否已有数据
-    const todoCount = this.count('todos');
-    if (todoCount === 0) {
-      console.log('📝 初始化示例数据...');
-      this.insert('todos', { title: '学习 Vue 3', completed: 0 });
-      this.insert('todos', { title: '学习 Express', completed: 1 });
-      this.insert('todos', { title: '构建全栈应用', completed: 0 });
-      console.log('✅ 示例数据初始化完成');
-    }
-  }
 
   /**
    * 关闭数据库连接
@@ -323,9 +365,7 @@ class SQLiteDatabase {
 const db = new SQLiteDatabase();
 
 // 初始化数据库并导出
-db.init().then(() => {
-  db.initSampleData();
-}).catch(error => {
+db.init().catch(error => {
   console.error('数据库初始化失败:', error);
   process.exit(1);
 });

@@ -1,4 +1,6 @@
 const logger = require('../utils/logger');
+const { getSystemPrompt, getPromptTypes } = require('../config/prompts');
+const Chat = require('../models/Chat');
 
 /**
  * 预设的模型配置
@@ -21,7 +23,7 @@ const MODEL_CONFIGS = {
  */
 const chatWithAI = async (req, res, next) => {
   try {
-    const { modelType, messages } = req.body;
+    const { modelType, messages, promptType = 'CBT' } = req.body;
 
     if (!modelType || !messages) {
       return res.status(400).json({
@@ -48,10 +50,20 @@ const chatWithAI = async (req, res, next) => {
       });
     }
 
-    logger.info('AI 聊天请求', { 
-      modelType, 
-      messageCount: messages.length 
+    logger.info('AI 聊天请求', {
+      modelType,
+      promptType,
+      messageCount: messages.length
     });
+
+    // 获取预置的 system prompt
+    const systemPrompt = getSystemPrompt(promptType);
+
+    // 在消息开头添加 system prompt
+    const messagesWithSystem = [
+      { role: 'system', content: systemPrompt.prompt },
+      ...messages
+    ];
 
     // 调用 DeepSeek API
     const response = await fetch(modelConfig.apiUrl, {
@@ -62,7 +74,7 @@ const chatWithAI = async (req, res, next) => {
       },
       body: JSON.stringify({
         model: modelConfig.modelName,
-        messages: messages
+        messages: messagesWithSystem
       })
     });
 
@@ -89,12 +101,30 @@ const chatWithAI = async (req, res, next) => {
 
     logger.info('AI 聊天成功', {
       modelType,
+      promptType,
       hasReasoning: !!data.choices[0].message.reasoning_content
     });
 
+    const aiMessage = data.choices[0].message;
+
+    // 保存聊天记录到数据库
+    try {
+      const userMessage = messages[messages.length - 1].content;
+      await Chat.create({
+        model_type: modelType,
+        user_message: userMessage,
+        ai_response: aiMessage.content,
+        reasoning_content: aiMessage.reasoning_content || null
+      });
+      logger.info('聊天记录已保存到数据库');
+    } catch (dbError) {
+      logger.warn('保存聊天记录失败', { error: dbError.message });
+      // 不影响主流程，继续返回响应
+    }
+
     res.json({
       success: true,
-      data: data.choices[0].message
+      data: aiMessage
     });
   } catch (error) {
     logger.error('AI 聊天异常', { error: error.message });
@@ -102,16 +132,14 @@ const chatWithAI = async (req, res, next) => {
   }
 };
 
+
 /**
  * 获取支持的模型列表
  */
 const getModels = (req, res) => {
   res.json({
     success: true,
-    data: Object.keys(MODEL_CONFIGS).map(key => ({
-      key,
-      ...MODEL_CONFIGS[key]
-    }))
+    data: MODEL_CONFIGS
   });
 };
 
@@ -131,5 +159,6 @@ const healthCheck = (req, res) => {
 module.exports = {
   chatWithAI,
   getModels,
+  getPromptTypes,
   healthCheck
 };

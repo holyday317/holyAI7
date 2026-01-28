@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const { errorHandler, notFoundHandler } = require('./middleware/errorHandler');
 const logger = require('./utils/logger');
+const { watchPrompts } = require('./config/prompts');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -35,8 +36,10 @@ app.use(express.static('holy7-front/dist'));
 // 导入路由
 const apiRoutes = require('./routes/api');
 const chatRoutes = require('./routes/chatRoutes');
+const authRoutes = require('./routes/authRoutes');
 app.use('/api/test', apiRoutes);
 app.use('/api/ai', chatRoutes);
+app.use('/api/auth', authRoutes);
 
 // SPA 路由支持 - 所有非 API 请求返回 index.html
 app.use((req, res, next) => {
@@ -58,6 +61,9 @@ app.listen(PORT, () => {
   logger.info(`🚀 服务器运行在 http://localhost:${PORT}`);
   logger.info(`📡 API 地址: http://localhost:${PORT}/api`);
   logger.info(`🔧 环境: ${process.env.NODE_ENV || 'development'}`);
+  
+  // 启动 prompts 监听
+  watchPrompts();
 });
 
 module.exports = app;

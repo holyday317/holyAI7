@@ -1,13 +1,7 @@
 const express = require('express');
 const router = express.Router();
-const todoController = require('../controllers/todoController');
 
-// 待办事项路由
-router.get('/todos', todoController.getAllTodos);
-router.get('/todos/stats', todoController.getStats);
-router.get('/todos/:id', todoController.getTodoById);
-router.post('/todos', todoController.createTodo);
-router.put('/todos/:id', todoController.updateTodo);
-router.delete('/todos/:id', todoController.deleteTodo);
+// API 路由
+// 注意：Todo 相关路由已移除
 
 module.exports = router;

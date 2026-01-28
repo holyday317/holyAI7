@@ -1,4 +1,5 @@
 import axios from 'axios'
+import router from '@/router'
 
 // 创建 axios 实例
 const request = axios.create({
@@ -12,11 +13,11 @@ const request = axios.create({
 // 请求拦截器
 request.interceptors.request.use(
   (config) => {
-    // 可以在这里添加 token 等认证信息
-    // const token = localStorage.getItem('token')
-    // if (token) {
-    //   config.headers.Authorization = `Bearer ${token}`
-    // }
+    // 添加 token 到请求头
+    const token = localStorage.getItem('token')
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`
+    }
     return config
   },
   (error) => {
@@ -41,19 +42,29 @@ request.interceptors.response.use(
       
       switch (status) {
         case 400:
-          console.error('请求参数错误:', data.error)
+          console.error('请求参数错误:', data.message || data.error)
+          break
+        case 401:
+          console.error('未授权，请重新登录')
+          // 清除本地存储的 token 和用户信息
+          localStorage.removeItem('token')
+          localStorage.removeItem('username')
+          // 跳转到登录页面
+          if (router.currentRoute.value.path !== '/login') {
+            router.push('/login')
+          }
           break
         case 404:
-          console.error('资源不存在:', data.error)
+          console.error('资源不存在:', data.message || data.error)
           break
         case 500:
-          console.error('服务器内部错误:', data.error)
+          console.error('服务器内部错误:', data.message || data.error)
           break
         default:
-          console.error('未知错误:', data.error || '请求失败')
+          console.error('未知错误:', data.message || data.error || '请求失败')
       }
       
-      return Promise.reject(data.error || '请求失败')
+      return Promise.reject(data.message || data.error || '请求失败')
     } else if (error.request) {
       // 请求已发出但没有收到响应
       console.error('网络错误，请检查后端服务是否启动')
