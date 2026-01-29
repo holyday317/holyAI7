@@ -110,11 +110,20 @@ const chatWithAI = async (req, res, next) => {
     // 保存聊天记录到数据库
     try {
       const userMessage = messages[messages.length - 1].content;
+      const conversationId = req.body.conversationId || null;
+      
+      logger.info('保存聊天记录', {
+        conversationId,
+        hasConversationId: !!conversationId,
+        userMessageLength: userMessage?.length
+      });
+      
       await Chat.create({
         model_type: modelType,
         user_message: userMessage,
         ai_response: aiMessage.content,
-        reasoning_content: aiMessage.reasoning_content || null
+        reasoning_content: aiMessage.reasoning_content || null,
+        conversation_id: conversationId
       });
       logger.info('聊天记录已保存到数据库');
     } catch (dbError) {

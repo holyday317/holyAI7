@@ -24,12 +24,13 @@ class Chat {
    * 创建新聊天记录
    */
   static create(data) {
-    const { model_type, user_message, ai_response, reasoning_content } = data;
+    const { model_type, user_message, ai_response, reasoning_content, conversation_id } = data;
     return db.insert('chats', {
       model_type,
       user_message,
       ai_response,
-      reasoning_content
+      reasoning_content,
+      conversation_id
     });
   }
 

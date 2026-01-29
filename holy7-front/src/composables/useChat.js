@@ -2,10 +2,16 @@ import { ref } from 'vue'
 import { chatWithAI, MODEL_CONFIGS, getDefaultSystemMessage } from '@/api/chat'
 
 export function useChat() {
-  const chatList = ref([{
-    type: 'answer',
-    content: '有啥快问,柒爷听着呢'
-  }])
+  const chatList = ref([
+  //   {
+  //   type: 'answer',
+  //   content: '有啥快问,柒爷听着呢'
+  // }
+  // {
+  //   type: 'ask',
+  //   content: '喂喂喂'
+  // }
+])
   const messageList = ref(getDefaultSystemMessage())
   const isLoading = ref(false)
   const isRound = ref('1') // 是否多轮对话
@@ -21,10 +27,10 @@ export function useChat() {
   /**
    * 发送消息
    */
-  const sendMessage = async () => {
-    if (!inputText.value.trim()) return
+  const sendMessage = async (text, conversationId = null) => {
+    if (!text || !text.trim()) return
 
-    const userMessage = inputText.value.trim()
+    const userMessage = text.trim()
     chatList.value.push({
       type: 'ask',
       content: userMessage
@@ -37,7 +43,7 @@ export function useChat() {
     handleUserAction()
 
     try {
-      const result = await fetchCompletion(userMessage)
+      const result = await fetchCompletion(userMessage, conversationId)
       isLoading.value = false
       
       // 取消延迟提示
@@ -104,7 +110,7 @@ export function useChat() {
   /**
    * 调用 AI 接口
    */
-  const fetchCompletion = async (content) => {
+  const fetchCompletion = async (content, conversationId = null) => {
     if (isRound.value === '1') {
       messageList.value.push({
         role: 'user',
@@ -120,7 +126,8 @@ export function useChat() {
     try {
       const response = await chatWithAI({
         modelType: modelType.value,
-        messages: messageList.value
+        messages: messageList.value,
+        conversationId: conversationId
       })
 
       if (!response.success || !response.data) {
@@ -184,6 +191,16 @@ export function useChat() {
     })
   }
 
+  /**
+   * 切换模型
+   */
+  const changeModel = (newModelType) => {
+    if (modelType.value === newModelType) return
+    
+    modelType.value = newModelType
+    console.log('切换模型:', newModelType)
+  }
+
   return {
     chatList,
     isLoading,
@@ -195,6 +212,7 @@ export function useChat() {
     sendMessage,
     showReasoningContent,
     scrollToBottom,
-    clearRound
+    clearRound,
+    changeModel
   }
 }

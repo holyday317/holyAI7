@@ -65,6 +65,7 @@ class SQLiteDatabase {
     this.db.run(`
       CREATE TABLE IF NOT EXISTS chats (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
+        conversation_id INTEGER DEFAULT NULL,
         model_type TEXT NOT NULL,
         user_message TEXT NOT NULL,
         ai_response TEXT,
@@ -72,6 +73,19 @@ class SQLiteDatabase {
         created_at TEXT DEFAULT CURRENT_TIMESTAMP
       )
     `);
+    
+    // 检查并添加 conversation_id 字段（如果不存在）
+    try {
+      const result = this.db.exec("PRAGMA table_info(chats)");
+      const hasConversationId = result[0].values.some(row => row[1] === 'conversation_id');
+      
+      if (!hasConversationId) {
+        this.db.run(`ALTER TABLE chats ADD COLUMN conversation_id INTEGER DEFAULT NULL`);
+        console.log('✅ 已为 chats 表添加 conversation_id 字段');
+      }
+    } catch (error) {
+      console.warn('⚠️ 检查/添加 conversation_id 字段失败:', error.message);
+    }
 
     // 创建用户表
     this.db.run(`
@@ -93,6 +107,17 @@ class SQLiteDatabase {
       )
     `);
 
+    // 创建会话表
+    this.db.run(`
+      CREATE TABLE IF NOT EXISTS conversations (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        title TEXT NOT NULL,
+        user_id INTEGER,
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
     console.log('✅ 数据表初始化完成');
   }
 
@@ -110,6 +135,7 @@ class SQLiteDatabase {
       this.idCounters.set('todos', 1);
       this.idCounters.set('chats', 1);
       this.idCounters.set('users', 1);
+      this.idCounters.set('conversations', 1);
     }
   }
 

@@ -37,9 +37,11 @@ app.use(express.static('holy7-front/dist'));
 const apiRoutes = require('./routes/api');
 const chatRoutes = require('./routes/chatRoutes');
 const authRoutes = require('./routes/authRoutes');
+const conversationRoutes = require('./routes/conversationRoutes');
 app.use('/api/test', apiRoutes);
 app.use('/api/ai', chatRoutes);
 app.use('/api/auth', authRoutes);
+app.use('/api/conversations', conversationRoutes);
 
 // SPA 路由支持 - 所有非 API 请求返回 index.html
 app.use((req, res, next) => {
