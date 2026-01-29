@@ -22,14 +22,14 @@ const menuItems = [
     id: 'markbook',
     icon: '📚',
     label: '马克本',
-    description: '我的收藏和笔记',
+    description: '我的收藏',
     disabled: false
   },
   {
-    id: 'improvement',
+    id: 'cbthomework',
     icon: '🚀',
-    label: '改进计划',
-    description: '功能反馈和优化建议',
+    label: 'CBT家庭作业',
+    description: 'todo',
     disabled: true
   }
 ]

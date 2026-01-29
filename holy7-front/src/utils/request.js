@@ -1,9 +1,24 @@
 import axios from 'axios'
 import router from '@/router'
 
+// 根据环境动态设置 baseURL
+// 开发环境：使用 /api（由 Vite 代理到 localhost:3000）
+// 生产环境：直接请求服务器地址
+const getBaseURL = () => {
+  // import.meta.env.PROD 在 Vite 中可用
+  // true 表示生产环境，false 表示开发环境
+  if (import.meta.env.PROD) {
+    // 生产环境使用服务器地址
+    return 'http://106.54.34.24:3000/api'
+  } else {
+    // 开发环境使用代理
+    return '/api'
+  }
+}
+
 // 创建 axios 实例
 const request = axios.create({
-  baseURL: '/api',
+  baseURL: getBaseURL(),
   timeout: 60000, // 增加到 60 秒，适应推理模型的响应时间
   headers: {
     'Content-Type': 'application/json',
