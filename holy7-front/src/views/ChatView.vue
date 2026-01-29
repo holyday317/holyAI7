@@ -174,6 +174,90 @@ const handleShowReasoningContent = (content) => {
   showReasoningContent(content)
 }
 
+/**
+ * 处理问卷提交
+ */
+const handleQuestionnaireSubmit = async (data) => {
+  console.log('问卷提交:', data)
+  
+  // 将问卷数据格式化为用户消息,发送给AI
+  let userMessage = formatQuestionnaireData(data)
+  
+  // 先添加一条系统消息显示问卷已提交
+  chatList.value.push({
+    type: 'answer',
+    content: '问卷已提交,正在分析...'
+  })
+  
+  // 将问卷数据作为用户消息发送给AI,让AI根据问卷内容提供针对性的回复
+  await handleSend(userMessage)
+}
+
+/**
+ * 将问卷数据格式化为用户消息
+ */
+const formatQuestionnaireData = (data) => {
+  const { type, data: formData } = data
+  
+  let message = `【问卷提交:${type}】\n\n`
+  
+  switch (type) {
+    case 'emotion_assessment':
+      message += `整体情绪状态: ${formData.overall_mood}分\n`
+      message += `焦虑程度: ${formData.anxiety_level}分\n`
+      message += `低落程度: ${formData.depression_level}分\n`
+      message += `压力程度: ${formData.stress_level}分\n`
+      message += `睡眠质量: ${formData.sleep_quality}分\n`
+      message += `精力水平: ${formData.energy_level}分\n\n`
+      message += `请根据以上情绪评估结果,为我提供针对性的建议和反馈。`
+      break
+      
+    case 'thought_record':
+      message += `情境: ${formData.situation}\n`
+      message += `自动化思维: ${formData.automatic_thought}\n`
+      message += `情绪类型: ${formData.emotion_type}\n`
+      message += `情绪强度: ${formData.emotion_intensity}分\n`
+      message += `行为: ${formData.behavior}\n`
+      message += `身体感受: ${formData.body_sensation}\n\n`
+      message += `请根据以上认知记录,帮我分析这个事件,识别认知扭曲,并提供挑战负面思维的建议。`
+      break
+      
+    case 'activity_plan':
+      message += `活动1(明天): ${formData.activity_1}\n`
+      message += `  预期愉悦感: ${formData.activity_1_pleasure}分\n`
+      message += `  预期掌控感: ${formData.activity_1_mastery}分\n\n`
+      message += `活动2(后天): ${formData.activity_2}\n`
+      message += `  预期愉悦感: ${formData.activity_2_pleasure}分\n`
+      message += `  预期掌控感: ${formData.activity_2_mastery}分\n\n`
+      message += `请根据以上活动计划,为我提供实施建议和鼓励。`
+      break
+      
+    case 'problem_solving':
+      message += `问题: ${formData.problem}\n`
+      message += `目标: ${formData.goal}\n`
+      message += `可能的解决方案: ${formData.solutions}\n`
+      message += `选择的方案及理由: ${formData.chosen_solution}\n`
+      message += `行动步骤: ${formData.action_steps}\n`
+      message += `时间安排: ${formData.timeline}\n\n`
+      message += `请根据以上问题解决工作表,帮我评估方案的可行性,并提供执行建议。`
+      break
+      
+    case 'mindfulness_breathing':
+      message += `练习时长: ${formData.duration}分钟\n`
+      message += `练习前状态: ${formData.before_state}\n`
+      message += `练习体验: ${formData.experience}\n`
+      message += `练习后状态: ${formData.after_state}\n\n`
+      message += `请根据以上正念呼吸练习记录,为我提供反馈和持续练习的建议。`
+      break
+      
+    default:
+      message += JSON.stringify(formData, null, 2)
+      message += `\n\n请根据以上问卷数据,为我提供反馈和建议。`
+  }
+  
+  return message
+}
+
 // ============================================================================
 // 会话管理函数
 // ============================================================================
@@ -504,6 +588,7 @@ defineExpose({
       :is-loading="isLoading"
       :conversation-id="currentConversationId"
       @show-reasoning="handleShowReasoningContent"
+      @questionnaire-submit="handleQuestionnaireSubmit"
     />
 
     <!-- 输入区域组件 -->

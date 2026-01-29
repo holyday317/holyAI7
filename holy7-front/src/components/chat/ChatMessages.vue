@@ -2,6 +2,7 @@
 import { ref, onMounted, onBeforeUnmount, watch, computed } from 'vue'
 import { marked } from 'marked'
 import ThoughtDialog from './ThoughtDialog.vue'
+import QuestionnaireDialog from './QuestionnaireDialog.vue'
 import { createBookmark, deleteBookmark, getBookmarks } from '@/api/bookmark'
 
 // Props
@@ -21,12 +22,19 @@ const props = defineProps({
 })
 
 // Emits
-const emit = defineEmits(['showReasoning'])
+const emit = defineEmits(['showReasoning', 'questionnaireSubmit'])
 
 // Ref
 const chatContainerRef = ref(null)
 // 存储每个消息的 bookmark ID，key 为消息索引
 const bookmarkIds = ref(new Map())
+
+// 问卷弹窗状态
+const questionnaireDialog = ref({
+  visible: false,
+  type: '',
+  data: {}
+})
 
 // 配置 marked 选项
 marked.setOptions({
@@ -37,15 +45,79 @@ marked.setOptions({
 })
 
 /**
+ * 解析特殊标记并返回处理后的内容和按钮列表
+ * 特殊标记格式: 【问卷类型|按钮文本】
+ * 例如: 【emotion_assessment|填写情绪评估问卷】
+ */
+const parseSpecialTags = (content) => {
+  if (!content) return { content: '', buttons: [] }
+  
+  const buttons = []
+  const regex = /【([^|]+)\|([^】]+)】/g
+  let parsedContent = content.replace(regex, (match, type, buttonText) => {
+    buttons.push({
+      type: type.trim(),
+      text: buttonText.trim()
+    })
+    return '' // 移除特殊标记
+  })
+  
+  return {
+    content: parsedContent,
+    buttons: buttons
+  }
+}
+
+/**
  * 渲染 Markdown 内容
  */
 const renderMarkdown = (content) => {
   try {
-    return marked(content || '')
+    const { content: parsedContent } = parseSpecialTags(content)
+    return marked(parsedContent || '')
   } catch (error) {
     console.error('Markdown 渲染失败:', error)
     return content || ''
   }
+}
+
+/**
+ * 显示问卷弹窗
+ */
+const showQuestionnaireDialog = (type) => {
+  questionnaireDialog.value = {
+    visible: true,
+    type: type,
+    data: {}
+  }
+}
+
+/**
+ * 关闭问卷弹窗
+ */
+const closeQuestionnaireDialog = () => {
+  questionnaireDialog.value.visible = false
+}
+
+/**
+ * 提交问卷
+ */
+const handleQuestionnaireSubmit = async (data) => {
+  try {
+    // 触发提交事件，将数据传递给父组件
+    emit('questionnaireSubmit', data)
+    console.log('问卷提交成功:', data)
+  } catch (error) {
+    console.error('问卷提交失败:', error)
+  }
+}
+
+/**
+ * 获取消息中的按钮列表
+ */
+const getMessageButtons = (message) => {
+  const { buttons } = parseSpecialTags(message.content)
+  return buttons
 }
 
 /**
@@ -244,6 +316,19 @@ onBeforeUnmount(() => {
             class="markdown-content"
             v-html="renderMarkdown(message.content)"
           ></div>
+          
+          <!-- 问卷按钮区域 -->
+          <div v-if="getMessageButtons(message).length > 0" class="questionnaire-buttons">
+            <button
+              v-for="(button, btnIndex) in getMessageButtons(message)"
+              :key="`btn-${index}-${btnIndex}`"
+              class="questionnaire-btn"
+              @click="showQuestionnaireDialog(button.type)"
+            >
+              {{ button.text }}
+            </button>
+          </div>
+          
           <div class="action-buttons">
             <button
               v-if="message.reasoning_content"
@@ -278,6 +363,15 @@ onBeforeUnmount(() => {
       <span class="loading-text">柒爷正在思考...</span>
     </div>
   </main>
+  
+  <!-- 问卷弹窗 -->
+  <QuestionnaireDialog
+    :visible="questionnaireDialog.visible"
+    :questionnaire-type="questionnaireDialog.type"
+    :questionnaire-data="questionnaireDialog.data"
+    @close="closeQuestionnaireDialog"
+    @submit="handleQuestionnaireSubmit"
+  />
 </template>
 
 <style scoped>
@@ -479,6 +573,43 @@ onBeforeUnmount(() => {
   gap: 8px;
   z-index: 10;
   flex-shrink: 0;
+}
+
+/* ============================================================================
+   问卷按钮区域
+   ============================================================================ */
+.questionnaire-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+  margin-bottom: 8px;
+}
+
+.questionnaire-btn {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: none;
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #fff;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+}
+
+.questionnaire-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.questionnaire-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 6px rgba(102, 126, 234, 0.3);
 }
 
 /* ============================================================================
