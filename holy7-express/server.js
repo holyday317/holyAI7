@@ -31,7 +31,7 @@ app.get('/health', (req, res) => {
 });
 
 // 静态文件服务 - 提供前端构建产物
-app.use(express.static('holy7-front/dist'));
+// app.use(express.static('holy7-front/dist'));
 
 // 导入路由
 const apiRoutes = require('./routes/api');
@@ -46,13 +46,13 @@ app.use('/api/conversations', conversationRoutes);
 app.use('/api/bookmarks', bookmarkRoutes);
 
 // SPA 路由支持 - 所有非 API 请求返回 index.html
-app.use((req, res, next) => {
-  // 如果是 API 请求，继续处理
-  if (req.path.startsWith('/api') || req.path.startsWith('/health')) {
-    return next();
-  }
-  res.sendFile('index.html', { root: 'holy7-front/dist' });
-});
+// app.use((req, res, next) => {
+//   // 如果是 API 请求，继续处理
+//   if (req.path.startsWith('/api') || req.path.startsWith('/health')) {
+//     return next();
+//   }
+//   res.sendFile('index.html', { root: 'holy7-front/dist' });
+// });
 
 // 404 错误处理
 app.use(notFoundHandler);

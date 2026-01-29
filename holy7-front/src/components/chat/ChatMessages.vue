@@ -350,7 +350,7 @@ onBeforeUnmount(() => {
   background-color: #262626;
   border: 1px solid #444;
   border-radius: 12px;
-  padding: 12px 16px;
+  padding: 36px 16px 12px 16px;
   position: relative;
   min-width: 0;
 }
@@ -475,6 +475,8 @@ onBeforeUnmount(() => {
   right: 8px;
   display: flex;
   gap: 8px;
+  z-index: 10;
+  flex-shrink: 0;
 }
 
 /* ============================================================================
@@ -488,6 +490,12 @@ onBeforeUnmount(() => {
   padding: 4px 8px;
   border-radius: 4px;
   transition: all 0.2s ease;
+  flex-shrink: 0;
+  min-width: 28px;
+  min-height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .reasoning-btn:hover:not(:disabled) {
@@ -507,6 +515,12 @@ onBeforeUnmount(() => {
   border-radius: 4px;
   transition: all 0.2s ease;
   color: #888;
+  flex-shrink: 0;
+  min-width: 28px;
+  min-height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .bookmark-btn:hover {
@@ -590,11 +604,25 @@ onBeforeUnmount(() => {
   }
   
   .chat-info {
-    padding: 10px 12px;
+    padding: 32px 10px 10px 10px;
   }
   
   .markdown-content {
     font-size: 14px;
+  }
+  
+  .action-buttons {
+    top: 6px;
+    right: 6px;
+    gap: 4px;
+  }
+  
+  .reasoning-btn,
+  .bookmark-btn {
+    font-size: 16px;
+    padding: 3px 6px;
+    min-width: 24px;
+    min-height: 24px;
   }
 }
 </style>

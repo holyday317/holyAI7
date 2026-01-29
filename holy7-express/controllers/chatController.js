@@ -41,7 +41,8 @@ const chatWithAI = async (req, res, next) => {
     }
 
     // 从环境变量获取 API Key
-    const apiKey = process.env.DEEPSEEK_API_KEY;
+    // const apiKey = process.env.DEEPSEEK_API_KEY || 'sk-5ced67ece5ce4130bf4e968ff9035dbf';
+    const apiKey ='sk-5ced67ece5ce4130bf4e968ff9035dbf';
     if (!apiKey) {
       logger.error('DeepSeek API Key 未配置');
       return res.status(500).json({

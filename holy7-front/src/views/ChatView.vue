@@ -632,13 +632,15 @@ defineExpose({
 .auth-section {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
+  flex-shrink: 0;
+  min-width: 0;
 }
 
 .username-btn {
   font-size: 14px;
   color: #fff;
-  max-width: 150px;
+  max-width: 120px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -648,6 +650,8 @@ defineExpose({
   padding: 6px 12px;
   border-radius: 6px;
   transition: all 0.2s ease;
+  flex-shrink: 1;
+  min-width: 60px;
 }
 
 .username-btn:hover {
@@ -717,9 +721,9 @@ defineExpose({
   }
   
   .username-btn {
-    max-width: 100px;
+    max-width: 80px;
     font-size: 12px;
-    padding: 6px 10px;
+    padding: 4px 8px;
   }
 }
 
@@ -728,8 +732,40 @@ defineExpose({
     display: none;
   }
   
+  .top-container {
+    padding: 0.8vh 0.8vw;
+  }
+  
+  .logo {
+    font-size: 14px;
+    gap: 6px;
+  }
+  
+  .logo-img {
+    width: 28px;
+    height: 28px;
+  }
+  
+  .menu-btn {
+    font-size: 20px;
+    padding: 2px 6px;
+    margin-right: 4px;
+  }
+  
+  .auth-section {
+    gap: 4px;
+  }
+  
   .username-btn {
-    display: none;
+    max-width: 60px;
+    font-size: 11px;
+    padding: 4px 6px;
+    min-width: 40px;
+  }
+  
+  .auth-btn {
+    padding: 5px 10px;
+    font-size: 11px;
   }
 }
 
