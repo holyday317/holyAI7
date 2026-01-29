@@ -221,7 +221,10 @@ const handleSelectConversation = async (conversationId) => {
       // 将后端的聊天记录转换为前端格式
       const chatItems = []
       
-      response.data.chats.forEach(chat => {
+      // 逆序遍历，保证时间顺序正确（旧的在前，新的在后）
+      const reversedChats = [...response.data.chats].reverse()
+      
+      reversedChats.forEach(chat => {
         // 先添加用户问题
         if (chat.user_message) {
           chatItems.push({
@@ -344,7 +347,10 @@ const autoLoadOrCreateConversation = async () => {
         // 将后端的聊天记录转换为前端格式
         const chatItems = []
         
-        chatResponse.data.chats.forEach(chat => {
+        // 逆序遍历，保证时间顺序正确（旧的在前，新的在后）
+        const reversedChats = [...chatResponse.data.chats].reverse()
+        
+        reversedChats.forEach(chat => {
           // 先添加用户问题
           if (chat.user_message) {
             chatItems.push({

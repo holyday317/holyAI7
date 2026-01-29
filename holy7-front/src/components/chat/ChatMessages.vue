@@ -313,14 +313,15 @@ onBeforeUnmount(() => {
 .ask-item {
   max-width: 80%;
   margin-left: auto;
-  background-color: #262626;
-  border: 1px solid #444;
+  background-color: #667eea;
+  border: 1px solid #5568d3;
   border-radius: 12px;
   padding: 12px 16px;
   font-size: 15px;
   line-height: 1.6;
   word-wrap: break-word;
   overflow-wrap: break-word;
+  color: #fff;
 }
 
 .answer-item {
@@ -353,6 +354,7 @@ onBeforeUnmount(() => {
   padding: 36px 16px 12px 16px;
   position: relative;
   min-width: 0;
+  color: #fff;
 }
 
 /* ============================================================================
