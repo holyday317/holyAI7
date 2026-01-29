@@ -271,7 +271,9 @@ const closeCreateDialog = () => {
  */
 const handleCreateConversation = async () => {
   try {
-    const title = newConversationTitle.value.trim() || '新对话'
+    const now = new Date()
+    const dateStr = `${now.getMonth() + 1}月${now.getDate()}日 ${now.getHours()}:${now.getMinutes().toString().padStart(2, '0')}`
+    const title = newConversationTitle.value.trim() || `新对话 ${dateStr}`
     const response = await createConversation({ title })
     
     if (response.success) {
@@ -385,8 +387,14 @@ const autoLoadOrCreateConversation = async () => {
 const createNewConversationWithGreeting = async () => {
   try {
     console.log('创建新会话并发送问候...')
+    
+    // 生成带日期的标题
+    const now = new Date()
+    const dateStr = `${now.getMonth() + 1}月${now.getDate()}日 ${now.getHours()}:${now.getMinutes().toString().padStart(2, '0')}`
+    const title = `新对话 ${dateStr}`
+    
     // 创建新会话
-    const response = await createConversation({ title: '新对话' })
+    const response = await createConversation({ title })
     
     if (response.success) {
       console.log('创建会话成功:', response.data.conversation)
