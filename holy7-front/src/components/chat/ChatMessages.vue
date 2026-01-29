@@ -107,6 +107,9 @@ const handleQuestionnaireSubmit = async (data) => {
     // 触发提交事件，将数据传递给父组件
     emit('questionnaireSubmit', data)
     console.log('问卷提交成功:', data)
+    
+    // 关闭问卷弹窗
+    closeQuestionnaireDialog()
   } catch (error) {
     console.error('问卷提交失败:', error)
   }
