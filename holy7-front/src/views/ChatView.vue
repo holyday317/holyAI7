@@ -7,6 +7,7 @@ import ChatMessages from '@/components/chat/ChatMessages.vue'
 import ChatInput from '@/components/chat/ChatInput.vue'
 import ThoughtDialog from '@/components/chat/ThoughtDialog.vue'
 import ModelSelector from '@/components/chat/ModelSelector.vue'
+import UserMenu from '@/components/chat/UserMenu.vue'
 import {
   createConversation,
   getConversationChats
@@ -50,6 +51,9 @@ const showCreateDialog = ref(false)
 const newConversationTitle = ref('')
 const sidebarRef = ref(null)
 
+// 用户菜单相关状态
+const isUserMenuOpen = ref(false)
+
 // ============================================================================
 // 计算属性
 // ============================================================================
@@ -71,25 +75,61 @@ const username = computed(() => {
 // 事件处理函数
 // ============================================================================
 /**
+ * 切换用户菜单
+ */
+const toggleUserMenu = () => {
+  if (!isLoggedIn.value) {
+    // 未登录时跳转到登录页面
+    router.push('/login')
+    return
+  }
+  isUserMenuOpen.value = !isUserMenuOpen.value
+}
+
+/**
+ * 关闭用户菜单
+ */
+const closeUserMenu = () => {
+  isUserMenuOpen.value = false
+}
+
+/**
  * 处理登录/登出操作
+ * 已登录时不再直接登出，改为打开用户菜单
  */
 const handleAuth = async () => {
-  try {
-    if (isLoggedIn.value) {
-      // 登出
-      localStorage.removeItem(STORAGE_KEYS.TOKEN)
-      localStorage.removeItem(STORAGE_KEYS.USERNAME)
-      
-      // 刷新页面
-      window.location.reload()
-    } else {
-      // 跳转到登录页面
-      router.push('/login')
-    }
-  } catch (error) {
-    console.error('认证操作失败:', error)
-    alert('操作失败，请重试')
+  if (isLoggedIn.value) {
+    // 已登录，打开用户菜单
+    toggleUserMenu()
+  } else {
+    // 未登录，跳转到登录页面
+    router.push('/login')
   }
+}
+
+/**
+ * 处理退出登录
+ */
+const handleLogout = async () => {
+  try {
+    // 登出
+    localStorage.removeItem(STORAGE_KEYS.TOKEN)
+    localStorage.removeItem(STORAGE_KEYS.USERNAME)
+    
+    // 刷新页面
+    window.location.reload()
+  } catch (error) {
+    console.error('登出失败:', error)
+    alert('登出失败，请重试')
+  }
+}
+
+/**
+ * 处理菜单导航
+ */
+const handleMenuNavigate = (itemId) => {
+  console.log('导航到:', itemId)
+  // TODO: 根据 itemId 跳转到对应页面
 }
 
 /**
@@ -333,13 +373,25 @@ defineExpose({
       </div>
       
       <div class="auth-section">
-        <!-- <ModelSelector
+        <ModelSelector
           :model-type="modelType"
           @change="changeModel"
-        /> -->
-        <span class="username">{{ username }}</span>
-        <button class="auth-btn" @click="handleAuth" :aria-label="isLoggedIn ? '退出登录' : '登录注册'">
-          {{ isLoggedIn ? '退出登录' : '登录/注册' }}
+        />
+        <button
+          v-if="isLoggedIn"
+          class="username-btn"
+          @click="toggleUserMenu"
+          :aria-label="`当前用户: ${username}, 点击打开菜单`"
+        >
+          {{ username }}
+        </button>
+        <button
+          v-else
+          class="auth-btn"
+          @click="handleAuth"
+          aria-label="登录注册"
+        >
+          登录/注册
         </button>
       </div>
     </header>
@@ -402,6 +454,15 @@ defineExpose({
         </div>
       </div>
     </div>
+
+    <!-- 用户菜单 -->
+    <UserMenu
+      :is-open="isUserMenuOpen"
+      :username="username"
+      @close="closeUserMenu"
+      @logout="handleLogout"
+      @navigate="handleMenuNavigate"
+    />
   </div>
 </template>
 
@@ -477,13 +538,27 @@ defineExpose({
   gap: 12px;
 }
 
-.username {
+.username-btn {
   font-size: 14px;
-  color: #ccc;
+  color: #fff;
   max-width: 150px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  background-color: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 6px 12px;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+.username-btn:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.username-btn:active {
+  transform: scale(0.95);
 }
 
 .auth-btn {
@@ -543,6 +618,12 @@ defineExpose({
     padding: 6px 12px;
     font-size: 12px;
   }
+  
+  .username-btn {
+    max-width: 100px;
+    font-size: 12px;
+    padding: 6px 10px;
+  }
 }
 
 @media (max-width: 480px) {
@@ -550,7 +631,7 @@ defineExpose({
     display: none;
   }
   
-  .username {
+  .username-btn {
     display: none;
   }
 }

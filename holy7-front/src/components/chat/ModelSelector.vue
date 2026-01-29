@@ -15,12 +15,12 @@ const isOpen = ref(false)
 // 模型配置
 const models = {
   deepseek: {
-    label: 'DeepSeek',
-    description: '标准版，快速响应'
+    label: '标准版',
+    description: '快速响应（薛定谔的快）'
   },
   'deepseek-R1': {
-    label: 'DeepSeek-R1',
-    description: '推理版，深度思考'
+    label: '思考版',
+    description: '慢悠悠'
   }
 }
 
