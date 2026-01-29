@@ -18,6 +18,12 @@ const router = createRouter({
       name: 'login',
       component: () => import('../views/LoginView.vue'),
       meta: { requiresAuth: false }
+    },
+    {
+      path: '/bookmarks',
+      name: 'bookmarks',
+      component: () => import('../views/BookmarkView.vue'),
+      meta: { requiresAuth: false }
     }
   ],
 })

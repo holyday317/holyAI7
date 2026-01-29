@@ -10,6 +10,7 @@ import ModelSelector from '@/components/chat/ModelSelector.vue'
 import UserMenu from '@/components/chat/UserMenu.vue'
 import {
   createConversation,
+  getConversations,
   getConversationChats
 } from '@/api/conversation'
 
@@ -129,7 +130,13 @@ const handleLogout = async () => {
  */
 const handleMenuNavigate = (itemId) => {
   console.log('导航到:', itemId)
-  // TODO: 根据 itemId 跳转到对应页面
+  
+  // 根据 itemId 跳转到对应页面
+  if (itemId === 'markbook') {
+    router.push('/bookmarks')
+  } else {
+    console.log('未实现的菜单项:', itemId)
+  }
 }
 
 /**
@@ -288,30 +295,111 @@ const handleCreateConversation = async () => {
 }
 
 /**
- * 自动创建新会话并发送"喂喂喂"
+ * 自动加载最近会话或创建新会话
  * 用于组件挂载时和登录成功后
  */
-const autoCreateConversationWithGreeting = async () => {
-  // 如果没有当前会话ID，自动创建一个新会话并发送"喂喂喂"
-  if (!currentConversationId.value) {
-    try {
-      const response = await createConversation({ title: '新对话' })
-      if (response.success) {
-        console.log('自动创建会话成功:', response.data.conversation)
-        currentConversationId.value = response.data.conversation.id
-        chatList.value = []
+const autoLoadOrCreateConversation = async () => {
+  // 如果已经有当前会话ID，直接返回
+  if (currentConversationId.value) {
+    console.log('已有选中的会话ID，跳过自动加载')
+    return
+  }
+  
+  try {
+    console.log('开始自动加载或创建会话...')
+    
+    // 直接调用API获取会话列表
+    const response = await getConversations()
+    
+    console.log('获取会话列表API响应:', {
+      success: response.success,
+      hasData: !!response.data,
+      conversationsCount: response.data?.conversations?.length || 0
+    })
+    
+    if (response.success && response.data && response.data.conversations.length > 0) {
+      // 选择第一个(最新的)会话
+      const recentConversation = response.data.conversations[0]
+      console.log('选择最近会话:', {
+        id: recentConversation.id,
+        title: recentConversation.title
+      })
+      
+      // 设置当前会话ID
+      currentConversationId.value = recentConversation.id
+      
+      // 加载会话的聊天记录
+      console.log('正在加载会话聊天记录...')
+      const chatResponse = await getConversationChats(recentConversation.id)
+      
+      console.log('加载聊天记录API响应:', {
+        success: chatResponse.success,
+        hasData: !!chatResponse.data,
+        chatsCount: chatResponse.data?.chats?.length || 0
+      })
+      
+      if (chatResponse.success) {
+        // 将后端的聊天记录转换为前端格式
+        const chatItems = []
         
-        // 刷新侧边栏的会话列表
-        if (sidebarRef.value && sidebarRef.value.loadConversations) {
-          await sidebarRef.value.loadConversations()
-        }
+        chatResponse.data.chats.forEach(chat => {
+          // 先添加用户问题
+          if (chat.user_message) {
+            chatItems.push({
+              type: 'question',
+              content: chat.user_message
+            })
+          }
+          
+          // 再添加AI回复
+          if (chat.ai_response) {
+            chatItems.push({
+              type: 'answer',
+              content: chat.ai_response,
+              reasoning_content: chat.reasoning_content
+            })
+          }
+        })
         
-        // 自动发送"喂喂喂"
-        await sendMessage('喂喂喂', currentConversationId.value)
+        chatList.value = chatItems
+        console.log('加载会话聊天记录成功,消息数量:', chatItems.length)
       }
-    } catch (error) {
-      console.error('自动创建会话失败:', error)
+      
+      return
     }
+    
+    console.log('没有找到已有会话，创建新会话')
+    // 如果没有找到已有会话，则创建新会话并发送问候
+    await createNewConversationWithGreeting()
+    
+  } catch (error) {
+    console.error('自动加载或创建会话失败:', error)
+    // 出错时创建新会话
+    await createNewConversationWithGreeting()
+  }
+}
+
+/**
+ * 创建新会话并发送问候
+ */
+const createNewConversationWithGreeting = async () => {
+  try {
+    console.log('创建新会话并发送问候...')
+    // 创建新会话
+    const response = await createConversation({ title: '新对话' })
+    
+    if (response.success) {
+      console.log('创建会话成功:', response.data.conversation)
+      // 设置当前会话ID
+      currentConversationId.value = response.data.conversation.id
+      
+      // 发送"喂喂喂"作为第一条消息
+      await sendMessage('喂喂喂', currentConversationId.value)
+      
+      console.log('新会话创建完成并发送了问候')
+    }
+  } catch (error) {
+    console.error('创建新会话失败:', error)
   }
 }
 
@@ -335,13 +423,13 @@ onMounted(async () => {
     return
   }
   
-  // 自动创建会话并发送"喂喂喂"
-  await autoCreateConversationWithGreeting()
+  // 自动加载最近会话或创建新会话
+  await autoLoadOrCreateConversation()
 })
 
 // 导出函数供外部调用（如登录成功后）
 defineExpose({
-  autoCreateConversationWithGreeting
+  autoLoadOrCreateConversation
 })
 </script>
 
@@ -400,6 +488,7 @@ defineExpose({
     <ChatMessages
       :messages="chatList"
       :is-loading="isLoading"
+      :conversation-id="currentConversationId"
       @show-reasoning="handleShowReasoningContent"
     />
 

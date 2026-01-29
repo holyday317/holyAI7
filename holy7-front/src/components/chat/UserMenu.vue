@@ -23,7 +23,7 @@ const menuItems = [
     icon: '📚',
     label: '马克本',
     description: '我的收藏和笔记',
-    disabled: true
+    disabled: false
   },
   {
     id: 'improvement',

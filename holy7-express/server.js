@@ -38,10 +38,12 @@ const apiRoutes = require('./routes/api');
 const chatRoutes = require('./routes/chatRoutes');
 const authRoutes = require('./routes/authRoutes');
 const conversationRoutes = require('./routes/conversationRoutes');
+const bookmarkRoutes = require('./routes/bookmarkRoutes');
 app.use('/api/test', apiRoutes);
 app.use('/api/ai', chatRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/conversations', conversationRoutes);
+app.use('/api/bookmarks', bookmarkRoutes);
 
 // SPA 路由支持 - 所有非 API 请求返回 index.html
 app.use((req, res, next) => {

@@ -1,7 +1,8 @@
 <script setup>
-import { ref, onMounted, onBeforeUnmount, watch } from 'vue'
+import { ref, onMounted, onBeforeUnmount, watch, computed } from 'vue'
 import { marked } from 'marked'
 import ThoughtDialog from './ThoughtDialog.vue'
+import { createBookmark, deleteBookmark, getBookmarks } from '@/api/bookmark'
 
 // Props
 const props = defineProps({
@@ -12,6 +13,10 @@ const props = defineProps({
   isLoading: {
     type: Boolean,
     default: false
+  },
+  conversationId: {
+    type: String,
+    default: null
   }
 })
 
@@ -20,6 +25,8 @@ const emit = defineEmits(['showReasoning'])
 
 // Ref
 const chatContainerRef = ref(null)
+// 存储每个消息的 bookmark ID，key 为消息索引
+const bookmarkIds = ref(new Map())
 
 // 配置 marked 选项
 marked.setOptions({
@@ -46,6 +53,103 @@ const renderMarkdown = (content) => {
  */
 const handleShowReasoning = (content) => {
   emit('showReasoning', content)
+}
+
+/**
+ * 检查消息是否已收藏
+ */
+const isBookmarked = (index) => {
+  return bookmarkIds.value.has(index)
+}
+
+/**
+ * 生成简单的哈希值作为 chatId
+ */
+const generateChatId = (content) => {
+  // 将 conversationId 和内容一起哈希，确保不同会话的相同内容有不同的 chatId
+  const combinedString = `${props.conversationId || 'default'}_${content}`
+  
+  let hash = 0
+  for (let i = 0; i < combinedString.length; i++) {
+    const char = combinedString.charCodeAt(i)
+    hash = ((hash << 5) - hash) + char
+    hash = hash & hash // 转换为32位整数
+  }
+  return `chat_${props.conversationId || 'default'}_${Math.abs(hash)}`
+}
+
+/**
+ * 加载用户的收藏列表，匹配当前消息
+ */
+const loadUserBookmarks = async () => {
+  try {
+    console.log('加载收藏列表, conversationId:', props.conversationId)
+    const response = await getBookmarks()
+    if (response.success) {
+      const bookmarks = response.data.bookmarks
+      console.log('获取到收藏列表:', bookmarks.length, '条')
+      
+      // 清空之前的收藏状态
+      bookmarkIds.value.clear()
+      
+      // 遍历所有消息，检查是否已收藏
+      props.messages.forEach((message, index) => {
+        if (message.type === 'answer') {
+          const chatId = generateChatId(message.content)
+          console.log(`消息 ${index} 的 chatId:`, chatId)
+          const bookmark = bookmarks.find(b => b.chat_id === chatId)
+          if (bookmark) {
+            bookmarkIds.value.set(index, bookmark.id)
+            console.log(`消息 ${index} 已收藏, bookmarkId:`, bookmark.id)
+          } else {
+            console.log(`消息 ${index} 未收藏`)
+          }
+        }
+      })
+    }
+  } catch (error) {
+    console.error('加载收藏列表失败:', error)
+  }
+}
+
+/**
+ * 处理收藏/取消收藏
+ */
+const handleBookmark = async (message, index) => {
+  try {
+    if (isBookmarked(index)) {
+      // 已收藏，取消收藏
+      const bookmarkId = bookmarkIds.value.get(index)
+      if (bookmarkId) {
+        const response = await deleteBookmark(bookmarkId)
+        if (response.success) {
+          bookmarkIds.value.delete(index)
+          console.log('取消收藏成功')
+        }
+      }
+    } else {
+      // 未收藏，创建收藏
+      const chatId = generateChatId(message.content)
+      const response = await createBookmark({
+        chatId,
+        content: message.content,
+        note: ''
+      })
+      
+      if (response.success) {
+        // 保存后端返回的 bookmark ID
+        bookmarkIds.value.set(index, response.data.bookmark.id)
+        console.log('收藏成功')
+      } else {
+        // 如果后端返回错误信息，显示给用户
+        if (response.message) {
+          console.log('收藏失败:', response.message)
+        }
+      }
+    }
+  } catch (error) {
+    console.error('收藏操作失败:', error)
+  }
 }
 
 // ============================================================================
@@ -96,9 +200,10 @@ defineExpose({
   scrollToBottomNextTick
 })
 
-// 监听消息变化，自动滚动到底部
+// 监听消息变化，自动滚动到底部并加载收藏状态
 watch(() => props.messages, () => {
   scrollToBottomNextTick()
+  loadUserBookmarks()
 }, { deep: true })
 
 // 生命周期
@@ -108,6 +213,8 @@ onMounted(() => {
   }
   // 初始滚动到底部
   scrollToBottom()
+  // 加载收藏状态
+  loadUserBookmarks()
 })
 
 onBeforeUnmount(() => {
@@ -133,19 +240,30 @@ onBeforeUnmount(() => {
           <img src="@/assets/chathead.gif" alt="AI Avatar" class="avatar-img" />
         </div>
         <div class="chat-info">
-          <div 
-            class="markdown-content" 
+          <div
+            class="markdown-content"
             v-html="renderMarkdown(message.content)"
           ></div>
-          <button 
-            v-if="message.reasoning_content"
-            class="reasoning-btn"
-            @click="handleShowReasoning(message.reasoning_content)"
-            title="查看推理过程"
-            aria-label="查看推理过程"
-          >
-            ❓
-          </button>
+          <div class="action-buttons">
+            <button
+              v-if="message.reasoning_content"
+              class="reasoning-btn"
+              @click="handleShowReasoning(message.reasoning_content)"
+              title="查看推理过程"
+              aria-label="查看推理过程"
+            >
+              ❓
+            </button>
+            <button
+              class="bookmark-btn"
+              @click="handleBookmark(message, index)"
+              :class="{ bookmarked: isBookmarked(index) }"
+              :title="isBookmarked(index) ? '已收藏' : '收藏到马克本'"
+              :aria-label="isBookmarked(index) ? '已收藏到马克本' : '收藏到马克本'"
+            >
+              {{ isBookmarked(index) ? '★' : '☆' }}
+            </button>
+          </div>
         </div>
       </div>
       
@@ -349,12 +467,20 @@ onBeforeUnmount(() => {
 }
 
 /* ============================================================================
-   推理按钮
+   操作按钮组
    ============================================================================ */
-.reasoning-btn {
+.action-buttons {
   position: absolute;
   top: 8px;
   right: 8px;
+  display: flex;
+  gap: 8px;
+}
+
+/* ============================================================================
+   推理按钮
+   ============================================================================ */
+.reasoning-btn {
   background: none;
   border: none;
   font-size: 18px;
@@ -367,6 +493,30 @@ onBeforeUnmount(() => {
 .reasoning-btn:hover:not(:disabled) {
   background-color: rgba(255, 255, 255, 0.1);
   transform: scale(1.1);
+}
+
+/* ============================================================================
+   收藏按钮
+   ============================================================================ */
+.bookmark-btn {
+  background: none;
+  border: none;
+  font-size: 18px;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  color: #888;
+}
+
+.bookmark-btn:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  transform: scale(1.1);
+  color: #ffd700;
+}
+
+.bookmark-btn.bookmarked {
+  color: #ffd700;
 }
 
 /* ============================================================================
