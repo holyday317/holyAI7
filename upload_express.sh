@@ -46,14 +46,15 @@ echo "✓ 本地目录存在: $LOCAL_PATH"
 cd "$LOCAL_PATH" || exit 1
 echo "✓ 已切换到项目目录: $LOCAL_PATH"
 
-# 3. 压缩文件夹(排除node_modules、.git、logs等)
+# 3. 压缩文件夹(排除node_modules、.git、logs中的日志文件等)
 echo ""
 echo "正在压缩文件夹..."
 tar -czf "$ARCHIVE_NAME" \
   --exclude='node_modules' \
   --exclude='.git' \
   --exclude='*.log' \
-  --exclude='logs' \
+  --exclude='logs/*.log' \
+  --exclude='data' \
   --exclude='.DS_Store' \
   --exclude='.pm2' \
   --exclude='dist' \
@@ -101,6 +102,12 @@ sshpass -p "${SERVER_PASSWORD}" ssh -o StrictHostKeyChecking=no "${SERVER_USER}@
     rm -rf holy7-express
     mkdir -p holy7-express
     tar -xzf "$ARCHIVE_NAME" -C holy7-express
+    
+    # 创建必要的目录并设置正确的权限
+    cd holy7-express
+    mkdir -p logs data
+    chmod 755 logs data
+    
     echo "✓ 解压完成"
     echo "解压后的文件:"
     ls -la "$SERVER_PATH/holy7-express" | head -20
@@ -146,9 +153,34 @@ if [[ "$restart_service" == "y" || "$restart_service" == "Y" ]]; then
     echo "正在重启 PM2 服务..."
     sshpass -p "${SERVER_PASSWORD}" ssh -o StrictHostKeyChecking=no "${SERVER_USER}@${SERVER_IP}" << EOF
         cd ${SERVER_PATH}/holy7-express
-        pm2 restart holy7-express || pm2 start ecosystem.config.js --env production
-        echo "✓ 服务已启动"
-        pm2 status
+        
+        # 创建必要的目录并设置权限
+        mkdir -p logs data
+        chmod 755 logs data
+        
+        # 清理旧日志文件
+        rm -f logs/*.log 2>/dev/null || true
+        
+        # 停止现有进程（如果存在）
+        pm2 stop holy7-express 2>/dev/null || true
+        pm2 delete holy7-express 2>/dev/null || true
+        
+        # 启动服务
+        pm2 start ecosystem.config.js --env production
+        
+        # 等待3秒让服务启动
+        sleep 3
+        
+        # 检查服务状态
+        if pm2 info holy7-express | grep -q "status.*online"; then
+            echo "✓ 服务已启动"
+            pm2 status
+        else
+            echo "✗ 服务启动失败，查看日志："
+            pm2 logs holy7-express --lines 30 --nostream
+            pm2 info holy7-express
+            exit 1
+        fi
 EOF
 fi
 

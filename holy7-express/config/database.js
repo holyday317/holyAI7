@@ -10,6 +10,7 @@ const path = require('path');
 class SQLiteDatabase {
   constructor() {
     this.db = null;
+    // 将数据库文件放在项目根目录内的 data 文件夹中
     this.dbPath = path.join(__dirname, '../data/holy7.db');
     this.idCounters = new Map();
   }
