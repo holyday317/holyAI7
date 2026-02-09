@@ -76,7 +76,8 @@ const generateToken = (user) => {
   return jwt.sign(
     {
       id: user.id,
-      username: user.username
+      username: user.username,
+      isAdmin: user.is_admin === 1 || user.is_admin === true
     },
     JWT_SECRET,
     {

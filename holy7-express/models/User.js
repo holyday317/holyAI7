@@ -49,7 +49,7 @@ class User {
   /**
    * 创建新用户
    */
-  static async create(username, password) {
+  static async create(username, password, isAdmin = false) {
     try {
       // 检查用户名是否已存在
       const existingUser = this.findByUsername(username);
@@ -65,8 +65,8 @@ class User {
       const now = new Date().toISOString();
       
       db.run(
-        `INSERT INTO users (id, username, password, created_at, updated_at) VALUES (?, ?, ?, ?, ?)`,
-        [id, username, hashedPassword, now, now]
+        `INSERT INTO users (id, username, password, is_admin, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)`,
+        [id, username, hashedPassword, isAdmin ? 1 : 0, now, now]
       );
 
       // 获取新创建的用户
@@ -76,6 +76,42 @@ class User {
       return newUser;
     } catch (error) {
       console.error('创建用户失败:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * 设置用户为管理员
+   */
+  static setAsAdmin(userId) {
+    try {
+      const now = new Date().toISOString();
+      db.run(
+        `UPDATE users SET is_admin = 1, updated_at = ? WHERE id = ?`,
+        [now, userId]
+      );
+      db.save();
+      return this.findById(userId);
+    } catch (error) {
+      console.error('设置管理员失败:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * 移除管理员权限
+   */
+  static removeAdmin(userId) {
+    try {
+      const now = new Date().toISOString();
+      db.run(
+        `UPDATE users SET is_admin = 0, updated_at = ? WHERE id = ?`,
+        [now, userId]
+      );
+      db.save();
+      return this.findById(userId);
+    } catch (error) {
+      console.error('移除管理员失败:', error);
       throw error;
     }
   }

@@ -6,68 +6,72 @@
 const express = require('express');
 const router = express.Router();
 const AdminController = require('../controllers/adminController');
+const { adminAuthMiddleware } = require('../middleware/adminAuth');
+
+// ==================== 数据库表管理 ====================
+// 所有接口都需要管理员权限
 
 // 获取所有表名
-router.get('/tables', AdminController.getTables);
+router.get('/tables', adminAuthMiddleware, AdminController.getTables);
 
 // 获取数据库统计信息
-router.get('/stats', AdminController.getStats);
+router.get('/stats', adminAuthMiddleware, AdminController.getStats);
 
 // 获取表结构
-router.get('/tables/:table/schema', AdminController.getTableSchema);
+router.get('/tables/:table/schema', adminAuthMiddleware, AdminController.getTableSchema);
 
 // 获取表数据
-router.get('/tables/:table/data', AdminController.getTableData);
+router.get('/tables/:table/data', adminAuthMiddleware, AdminController.getTableData);
 
 // 搜索记录
-router.get('/tables/:table/search', AdminController.searchRecords);
+router.get('/tables/:table/search', adminAuthMiddleware, AdminController.searchRecords);
 
 // 根据 ID 获取单条记录
-router.get('/tables/:table/records/:id', AdminController.getRecordById);
+router.get('/tables/:table/records/:id', adminAuthMiddleware, AdminController.getRecordById);
 
 // 创建记录
-router.post('/tables/:table/records', AdminController.createRecord);
+router.post('/tables/:table/records', adminAuthMiddleware, AdminController.createRecord);
 
 // 更新记录
-router.put('/tables/:table/records/:id', AdminController.updateRecord);
+router.put('/tables/:table/records/:id', adminAuthMiddleware, AdminController.updateRecord);
 
 // 删除记录
-router.delete('/tables/:table/records/:id', AdminController.deleteRecord);
+router.delete('/tables/:table/records/:id', adminAuthMiddleware, AdminController.deleteRecord);
 
 // ==================== 用户管理 ====================
 
 // 获取用户列表
-router.get('/users', AdminController.getUsers);
+router.get('/users', adminAuthMiddleware, AdminController.getUsers);
 
 // 获取用户详情
-router.get('/users/:id', AdminController.getUser);
+router.get('/users/:id', adminAuthMiddleware, AdminController.getUser);
 
 // 删除用户
-router.delete('/users/:id', AdminController.deleteUser);
+router.delete('/users/:id', adminAuthMiddleware, AdminController.deleteUser);
 
 // 获取用户的会话列表
-router.get('/users/:userId/conversations', AdminController.getUserConversations);
+router.get('/users/:userId/conversations', adminAuthMiddleware, AdminController.getUserConversations);
 
 // ==================== 会话管理 ====================
 
 // 获取会话列表
-router.get('/conversations', AdminController.getConversations);
+router.get('/conversations', adminAuthMiddleware, AdminController.getConversations);
 
 // 获取会话详情
-router.get('/conversations/:id', AdminController.getConversation);
+router.get('/conversations/:id', adminAuthMiddleware, AdminController.getConversation);
 
 // 获取会话的聊天记录
-router.get('/conversations/:id/chats', AdminController.getConversationChats);
+router.get('/conversations/:id/chats', adminAuthMiddleware, AdminController.getConversationChats);
 
 // 删除会话
-router.delete('/conversations/:id', AdminController.deleteConversation);
+router.delete('/conversations/:id', adminAuthMiddleware, AdminController.deleteConversation);
 
 // ==================== 书签管理 ====================
 
 // 获取书签列表
-router.get('/bookmarks', AdminController.getBookmarks);
+router.get('/bookmarks', adminAuthMiddleware, AdminController.getBookmarks);
 
 // 删除书签
-router.delete('/bookmarks/:id', AdminController.deleteBookmark);
+router.delete('/bookmarks/:id', adminAuthMiddleware, AdminController.deleteBookmark);
 
 module.exports = router;

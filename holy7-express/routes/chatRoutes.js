@@ -1,9 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const chatController = require('../controllers/chatController');
+const { authMiddleware } = require('../middleware/auth');
 
-// AI 聊天接口
-router.post('/chat', chatController.chatWithAI);
+// AI 聊天接口（需要登录）
+router.post('/chat', authMiddleware, chatController.chatWithAI);
 
 // 获取支持的模型列表
 router.get('/models', chatController.getModels);

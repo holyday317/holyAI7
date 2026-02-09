@@ -133,6 +133,15 @@ router.get('/:id/chats', authMiddleware, (req, res) => {
     const { id } = req.params;
     const userId = req.user.id;
 
+    // 先检查会话是否属于当前用户
+    const conversation = Conversation.findById(id, userId);
+    if (!conversation) {
+      return res.status(404).json({
+        success: false,
+        message: '会话不存在或无权访问'
+      });
+    }
+
     const chats = Conversation.getChats(id, userId);
 
     res.json({
