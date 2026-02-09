@@ -144,16 +144,19 @@ watch(() => props.visible, (newVal) => {
                 </div>
               </div>
               
-              <!-- 下拉选择 -->
-              <select
-                v-else-if="field.type === 'select'"
-                v-model="formData[field.key]"
-                class="form-select"
-              >
-                <option v-for="option in field.options" :key="option" :value="option">
-                  {{ option }}
-                </option>
-              </select>
+              <!-- 单选按钮组 -->
+              <div v-else-if="field.type === 'select'" class="radio-group">
+                <div
+                  v-for="option in field.options"
+                  :key="option"
+                  class="radio-option"
+                  :class="{ 'selected': formData[field.key] === option }"
+                  @click="formData[field.key] = option"
+                >
+                  <span class="radio-circle"></span>
+                  <span class="radio-label">{{ option }}</span>
+                </div>
+              </div>
               
               <!-- 文本域 -->
               <textarea
@@ -387,6 +390,74 @@ watch(() => props.visible, (newVal) => {
   padding: 4px 12px;
   background: rgba(102, 126, 234, 0.1);
   border-radius: 6px;
+}
+
+/* ============================================================================
+   单选按钮组样式
+   ============================================================================ */
+.radio-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.radio-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  background-color: #2a2a2a;
+  border: 1px solid #444;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.radio-option:hover {
+  background-color: #333;
+  border-color: #555;
+}
+
+.radio-option.selected {
+  background-color: rgba(102, 126, 234, 0.1);
+  border-color: #667eea;
+}
+
+.radio-circle {
+  width: 18px;
+  height: 18px;
+  border: 2px solid #666;
+  border-radius: 50%;
+  position: relative;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+}
+
+.radio-option.selected .radio-circle {
+  border-color: #667eea;
+  background-color: #667eea;
+}
+
+.radio-option.selected .radio-circle::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 6px;
+  height: 6px;
+  background-color: #fff;
+  border-radius: 50%;
+}
+
+.radio-label {
+  font-size: 14px;
+  color: #fff;
+}
+
+.radio-option.selected .radio-label {
+  color: #667eea;
+  font-weight: 500;
 }
 
 /* ============================================================================

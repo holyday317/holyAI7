@@ -45,26 +45,24 @@ marked.setOptions({
 })
 
 /**
- * 解析特殊标记并返回处理后的内容和按钮列表
+ * 解析特殊标记并返回处理后的内容
  * 特殊标记格式: 【问卷类型|按钮文本】
  * 例如: 【emotion_assessment|填写情绪评估问卷】
+ * 将特殊标记替换为内联按钮
  */
 const parseSpecialTags = (content) => {
-  if (!content) return { content: '', buttons: [] }
+  if (!content) return { content: '' }
   
-  const buttons = []
   const regex = /【([^|]+)\|([^】]+)】/g
   let parsedContent = content.replace(regex, (match, type, buttonText) => {
-    buttons.push({
-      type: type.trim(),
-      text: buttonText.trim()
-    })
-    return buttonText.trim() // 保留按钮文本
+    const trimmedType = type.trim()
+    const trimmedText = buttonText.trim()
+    // 生成内联按钮 HTML
+    return `<button class="inline-questionnaire-btn" data-questionnaire-type="${trimmedType}">${trimmedText}</button>`
   })
   
   return {
-    content: parsedContent,
-    buttons: buttons
+    content: parsedContent
   }
 }
 
@@ -78,6 +76,19 @@ const renderMarkdown = (content) => {
   } catch (error) {
     console.error('Markdown 渲染失败:', error)
     return content || ''
+  }
+}
+
+/**
+ * 处理内联按钮点击
+ */
+const handleInlineButtonClick = (event) => {
+  const target = event.target
+  if (target.classList.contains('inline-questionnaire-btn')) {
+    const questionnaireType = target.dataset.questionnaireType
+    if (questionnaireType) {
+      showQuestionnaireDialog(questionnaireType)
+    }
   }
 }
 
@@ -113,14 +124,6 @@ const handleQuestionnaireSubmit = async (data) => {
   } catch (error) {
     console.error('问卷提交失败:', error)
   }
-}
-
-/**
- * 获取消息中的按钮列表
- */
-const getMessageButtons = (message) => {
-  const { buttons } = parseSpecialTags(message.content)
-  return buttons
 }
 
 /**
@@ -303,9 +306,9 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <main class="chat-container" ref="chatContainerRef">
-    <div 
-      v-for="(message, index) in messages" 
+  <main class="chat-container" ref="chatContainerRef" @click="handleInlineButtonClick">
+    <div
+      v-for="(message, index) in messages"
       :key="`chat-${index}`"
       class="chat-item"
     >
@@ -319,18 +322,6 @@ onBeforeUnmount(() => {
             class="markdown-content"
             v-html="renderMarkdown(message.content)"
           ></div>
-          
-          <!-- 问卷按钮区域 -->
-          <div v-if="getMessageButtons(message).length > 0" class="questionnaire-buttons">
-            <button
-              v-for="(button, btnIndex) in getMessageButtons(message)"
-              :key="`btn-${index}-${btnIndex}`"
-              class="questionnaire-btn"
-              @click="showQuestionnaireDialog(button.type)"
-            >
-              {{ button.text }}
-            </button>
-          </div>
           
           <div class="action-buttons">
             <button
@@ -579,21 +570,13 @@ onBeforeUnmount(() => {
 }
 
 /* ============================================================================
-   问卷按钮区域
+   内联问卷按钮
    ============================================================================ */
-.questionnaire-buttons {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 12px;
-  margin-bottom: 8px;
-}
-
-.questionnaire-btn {
+.markdown-content :deep(.inline-questionnaire-btn) {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   border: none;
-  border-radius: 8px;
-  padding: 8px 16px;
+  border-radius: 6px;
+  padding: 4px 12px;
   font-size: 14px;
   font-weight: 500;
   color: #fff;
@@ -602,17 +585,19 @@ onBeforeUnmount(() => {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
-}
-
-.questionnaire-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
-}
-
-.questionnaire-btn:active {
-  transform: translateY(0);
   box-shadow: 0 2px 6px rgba(102, 126, 234, 0.3);
+  vertical-align: baseline;
+  margin: 0 2px;
+}
+
+.markdown-content :deep(.inline-questionnaire-btn:hover) {
+  transform: translateY(-1px);
+  box-shadow: 0 3px 8px rgba(102, 126, 234, 0.4);
+}
+
+.markdown-content :deep(.inline-questionnaire-btn:active) {
+  transform: translateY(0);
+  box-shadow: 0 2px 4px rgba(102, 126, 234, 0.3);
 }
 
 /* ============================================================================

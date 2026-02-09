@@ -190,6 +190,13 @@ export function useChat() {
       content: 'Okey，已忽略上面沟通过的内容~'
     })
   }
+  
+  /**
+   * 设置消息列表（用于加载历史聊天记录）
+   */
+  const setMessageList = (messages) => {
+    messageList.value = messages
+  }
 
   /**
    * 切换模型
@@ -213,6 +220,7 @@ export function useChat() {
     showReasoningContent,
     scrollToBottom,
     clearRound,
+    setMessageList,
     changeModel
   }
 }

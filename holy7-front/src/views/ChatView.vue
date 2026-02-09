@@ -40,7 +40,8 @@ const {
   nowThought,
   sendMessage,
   showReasoningContent,
-  changeModel
+  changeModel,
+  setMessageList
 } = useChat()
 
 // ============================================================================
@@ -320,6 +321,7 @@ const handleSelectConversation = async (conversationId) => {
     if (response.success) {
       // 将后端的聊天记录转换为前端格式
       const chatItems = []
+      const messageListItems = []
       
       // 逆序遍历，保证时间顺序正确（旧的在前，新的在后）
       const reversedChats = [...response.data.chats].reverse()
@@ -331,6 +333,11 @@ const handleSelectConversation = async (conversationId) => {
             type: 'question',
             content: chat.user_message
           })
+          // 添加到消息列表作为 AI 上下文
+          messageListItems.push({
+            role: 'user',
+            content: chat.user_message
+          })
         }
         
         // 再添加AI回复
@@ -340,10 +347,18 @@ const handleSelectConversation = async (conversationId) => {
             content: chat.ai_response,
             reasoning_content: chat.reasoning_content
           })
+          // 添加到消息列表作为 AI 上下文
+          const aiMessage = {
+            role: 'assistant',
+            content: chat.ai_response
+          }
+          messageListItems.push(aiMessage)
         }
       })
       
       chatList.value = chatItems
+      // 更新 AI 上下文消息列表
+      setMessageList(messageListItems)
     }
   } catch (error) {
     console.error('加载会话聊天记录失败:', error)
@@ -446,6 +461,7 @@ const autoLoadOrCreateConversation = async () => {
       if (chatResponse.success) {
         // 将后端的聊天记录转换为前端格式
         const chatItems = []
+        const messageListItems = []
         
         // 逆序遍历，保证时间顺序正确（旧的在前，新的在后）
         const reversedChats = [...chatResponse.data.chats].reverse()
@@ -457,6 +473,11 @@ const autoLoadOrCreateConversation = async () => {
               type: 'question',
               content: chat.user_message
             })
+            // 添加到消息列表作为 AI 上下文
+            messageListItems.push({
+              role: 'user',
+              content: chat.user_message
+            })
           }
           
           // 再添加AI回复
@@ -466,10 +487,18 @@ const autoLoadOrCreateConversation = async () => {
               content: chat.ai_response,
               reasoning_content: chat.reasoning_content
             })
+            // 添加到消息列表作为 AI 上下文
+            const aiMessage = {
+              role: 'assistant',
+              content: chat.ai_response
+            }
+            messageListItems.push(aiMessage)
           }
         })
         
         chatList.value = chatItems
+        // 更新 AI 上下文消息列表
+        setMessageList(messageListItems)
         console.log('加载会话聊天记录成功,消息数量:', chatItems.length)
       }
       
