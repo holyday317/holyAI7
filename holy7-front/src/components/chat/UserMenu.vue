@@ -19,6 +19,20 @@ const emit = defineEmits(['close', 'logout', 'navigate'])
  */
 const menuItems = [
   {
+    id: 'questionnaires',
+    icon: '📊',
+    label: '量表评估',
+    description: '心理健康量表问卷',
+    disabled: false
+  },
+  {
+    id: 'questionnaire-history',
+    icon: '📝',
+    label: '量表记录',
+    description: '查看填写过的量表',
+    disabled: false
+  },
+  {
     id: 'markbook',
     icon: '📚',
     label: '马克本',

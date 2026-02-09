@@ -133,6 +133,18 @@ class SQLiteDatabase {
       )
     `);
 
+    // 创建问卷记录表
+    this.db.run(`
+      CREATE TABLE IF NOT EXISTS questionnaires (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER,
+        type TEXT NOT NULL,
+        data TEXT NOT NULL,
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+      )
+    `);
+
     console.log('✅ 数据表初始化完成');
   }
 
@@ -152,6 +164,7 @@ class SQLiteDatabase {
       this.idCounters.set('users', 1);
       this.idCounters.set('conversations', 1);
       this.idCounters.set('bookmarks', 1);
+      this.idCounters.set('questionnaires', 1);
     }
   }
 

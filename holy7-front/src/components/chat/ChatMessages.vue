@@ -59,7 +59,7 @@ const parseSpecialTags = (content) => {
       type: type.trim(),
       text: buttonText.trim()
     })
-    return '' // 移除特殊标记
+    return buttonText.trim() // 保留按钮文本
   })
   
   return {

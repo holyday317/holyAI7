@@ -13,6 +13,7 @@ import {
   getConversations,
   getConversationChats
 } from '@/api/conversation'
+import { saveQuestionnaire } from '@/api/questionnaire'
 
 // ============================================================================
 // 常量定义
@@ -132,7 +133,11 @@ const handleMenuNavigate = (itemId) => {
   console.log('导航到:', itemId)
   
   // 根据 itemId 跳转到对应页面
-  if (itemId === 'markbook') {
+  if (itemId === 'questionnaires') {
+    router.push('/questionnaires')
+  } else if (itemId === 'questionnaire-history') {
+    router.push('/questionnaire-history')
+  } else if (itemId === 'markbook') {
     router.push('/bookmarks')
   } else {
     console.log('未实现的菜单项:', itemId)
@@ -179,6 +184,17 @@ const handleShowReasoningContent = (content) => {
  */
 const handleQuestionnaireSubmit = async (data) => {
   console.log('问卷提交:', data)
+  
+  // 保存问卷记录到数据库
+  try {
+    await saveQuestionnaire({
+      type: data.type,
+      data: data.data
+    })
+    console.log('问卷记录已保存到数据库')
+  } catch (error) {
+    console.error('保存问卷记录失败:', error)
+  }
   
   // 将问卷数据格式化为用户消息,发送给AI
   let userMessage = formatQuestionnaireData(data)
@@ -519,6 +535,23 @@ onMounted(async () => {
   // 检查是否已登录
   if (!isLoggedIn.value) {
     return
+  }
+  
+  // 检查是否从量表评估页面返回，有问卷数据
+  const questionnaireData = router.currentRoute.value.query.questionnaire
+  if (questionnaireData) {
+    try {
+      const parsedData = JSON.parse(questionnaireData)
+      // 自动加载或创建会话
+      await autoLoadOrCreateConversation()
+      // 处理问卷提交
+      await handleQuestionnaireSubmit(parsedData)
+      // 清除查询参数
+      router.replace({ query: {} })
+      return
+    } catch (error) {
+      console.error('解析问卷数据失败:', error)
+    }
   }
   
   // 自动加载最近会话或创建新会话

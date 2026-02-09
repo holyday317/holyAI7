@@ -24,6 +24,18 @@ const router = createRouter({
       name: 'bookmarks',
       component: () => import('../views/BookmarkView.vue'),
       meta: { requiresAuth: false }
+    },
+    {
+      path: '/questionnaires',
+      name: 'questionnaires',
+      component: () => import('../views/QuestionnaireView.vue'),
+      meta: { requiresAuth: false }
+    },
+    {
+      path: '/questionnaire-history',
+      name: 'questionnaire-history',
+      component: () => import('../views/QuestionnaireHistoryView.vue'),
+      meta: { requiresAuth: false }
     }
   ],
 })
